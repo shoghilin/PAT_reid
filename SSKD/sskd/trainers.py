@@ -600,7 +600,9 @@ class ATMMTTrainer(object):
                       'Loss_tri {:.3f} / {:.3f}\t'
                       'Loss_ce_soft {:.3f}\t'
                       'Loss_tri_soft {:.3f}\t'
+                      'Loss_cam_disc {:.3f} \t'
                       'Loss_cam_reid {:.3f} \t'
+                      'Loss_pose_disc {:.3f} \t'
                       'Loss_pose_reid {:.3f} \t'
                       'Prec {:.2%} / {:.2%}\t'
                       .format(epoch, i + 1, len(data_loader_target),
@@ -609,7 +611,8 @@ class ATMMTTrainer(object):
                               losses_ce[0].avg, losses_ce[1].avg,
                               losses_tri[0].avg, losses_tri[1].avg,
                               losses_ce_soft.avg, losses_tri_soft.avg,
-                              losses_disc_reid[0].avg, losses_disc_reid[1].avg,
+                              losses_disc[0].avg, losses_disc_reid[0].avg, 
+                              losses_disc[1].avg, losses_disc_reid[1].avg, 
                               precisions[0].avg, precisions[1].avg))
 
     def _update_ema_variables(self, model, ema_model, alpha, global_step):

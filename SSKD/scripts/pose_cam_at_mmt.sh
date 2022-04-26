@@ -19,11 +19,11 @@ DATA_PATH="/home/lab314/HDD/shoghi/Datasets"
 ITERS=500
 
 # pose configuration
-# POSE_PATH="../../Datasets/market1501/Market-1501-v15.09.15"
+POSE_PATH="../Datasets/market1501/Market-1501-v15.09.15"
 # cp ${POSE_PATH}/pose_labels/pose_labels_market_kmeans_image_4.json ${POSE_PATH}/pose_labels_market.json 
 # cp ${POSE_PATH}/pose_labels/pose_labels_market_kmeans_image_8.json ${POSE_PATH}/pose_labels_market.json 
 # cp ${POSE_PATH}/pose_labels/pose_labels_market_kmeans_image_each_4.json ${POSE_PATH}/pose_labels_market.json 
-# cp ${POSE_PATH}/pose_labels/pose_labels_market_kmeans_image_each_8.json ${POSE_PATH}/pose_labels_market.json 
+cp ${POSE_PATH}/pose_labels/pose_labels_market_kmeans_image_each_8.json ${POSE_PATH}/pose_labels_market.json 
 
 
 POSE_PATH="../Datasets/dukemtmc-reid/DukeMTMC-reID/"
@@ -62,6 +62,19 @@ python examples/pose_train.py -ds ${SOURCE} -dt ${TARGET} -a ${ARCH} \
 	--pose_reid_weight 0.3 \
 	# --rr-gpu 
 
+
+SOURCE=dukemtmc-reid
+TARGET=market1501
+CUDA_VISIBLE_DEVICES=${CUDA} \
+python examples/pose_train.py -ds ${SOURCE} -dt ${TARGET} -a ${ARCH} \
+	--num-instances 8 --lr 0.00035 --iters ${ITERS} -b 64 --epochs 40 \
+	--soft-ce-weight 0.5 --soft-tri-weight 0.8 --dropout 0 --lambda-value 0 \
+	--init-1 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
+	--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
+	--logs-dir ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pose-mmt \
+    --data-dir ${DATA_PATH} --print-freq 50 --wo_cat\
+	--pose_reid_weight 0.3 \
+	# --rr-gpu 
 
 # # # MMT + CAT
 # CUDA_VISIBLE_DEVICES=${CUDA} \
