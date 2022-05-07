@@ -466,19 +466,17 @@ class ATMMTTrainer(object):
         self.criterion_tri_soft = SoftTripletLoss(margin=None).cuda()
         self.criterion_disc = nn.CrossEntropyLoss()
 
-    def update_cam_disc(self, f_out_t1, f_out_t2, c_org, disc_optimizer):
-        logit_t1 = self.cam_disc(f_out_t1.detach())
-        logit_t2 = self.cam_disc(f_out_t2.detach())
-        cam_loss = (self.criterion_disc(logit_t1, c_org) + self.criterion_disc(logit_t2, c_org)) / 2
+    def update_cam_disc(self, f_out, c_org, disc_optimizer):
+        logit = self.cam_disc(f_out.detach())
+        cam_loss = self.criterion_disc(logit, c_org)
         disc_optimizer[0].zero_grad()
         cam_loss.backward()
         disc_optimizer[0].step()
         return cam_loss
 
-    def update_pose_disc(self, f_out_t1, f_out_t2, p_org, disc_optimizer):
-        logit_t1 = self.pose_disc(f_out_t1.detach())
-        logit_t2 = self.pose_disc(f_out_t2.detach())
-        pose_loss = (self.criterion_disc(logit_t1, p_org) + self.criterion_disc(logit_t2, p_org)) / 2
+    def update_pose_disc(self, f_out, p_org, disc_optimizer):
+        logit = self.pose_disc(f_out.detach())
+        pose_loss = self.criterion_disc(logit, p_org)
         disc_optimizer[1].zero_grad()
         pose_loss.backward()
         disc_optimizer[1].step()
@@ -523,14 +521,16 @@ class ATMMTTrainer(object):
 
             # update cam discriminator
             if not self.args.wo_cat:
-                loss_cam_disc = self.update_cam_disc(f_out_t1, f_out_t2, c_org, disc_optimizer)
+                loss_cam_disc  = (self.update_cam_disc(f_out_t1, c_org, disc_optimizer) + \
+                                self.update_cam_disc(f_out_t2, c_org, disc_optimizer)) / 2
             else:
                 loss_cam_disc = torch.zeros((1,), device=self.args.device)
             losses_disc[0].update(loss_cam_disc.item())
 
             # update pose discriminator
             if not self.args.wo_pat:
-                loss_pose_disc = self.update_pose_disc(f_out_t1, f_out_t2, p_org, disc_optimizer)
+                loss_pose_disc = (self.update_pose_disc(f_out_t1, p_org, disc_optimizer) + \
+                                self.update_pose_disc(f_out_t2, p_org, disc_optimizer)) / 2
             else:
                 loss_pose_disc = torch.zeros((1,), device=self.args.device)
             losses_disc[1].update(loss_pose_disc.item())
