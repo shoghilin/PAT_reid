@@ -241,7 +241,7 @@ def main_worker(args):
         disc_optimizer = [torch.optim.Adam(cam_disc.parameters()), torch.optim.Adam(pose_disc.parameters())]
 
         # Trainer
-        trainer = ATMMTTrainer(model_1, model_2, model_1_ema, model_2_ema, cam_disc, pose_disc, args,
+        trainer = ATMMTTrainer(model_1, model_2, model_1_ema, model_2_ema, cam_disc, pose_disc, args, cluster_centers,
                                 num_cluster=args.num_clusters, alpha=args.alpha)
 
         train_loader_target.new_epoch()
