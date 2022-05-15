@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import warnings
 
+from .lab import LAB
 from .dukemtmc import DukeMTMC
 from .market1501 import Market1501
 
@@ -8,6 +9,7 @@ from .market1501 import Market1501
 __factory = {
     'market1501': Market1501,
     'dukemtmc-reid': DukeMTMC,
+    'lab_data':LAB
 }
 
 

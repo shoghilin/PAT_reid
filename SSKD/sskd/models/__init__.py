@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from .resnet import *
 from .resnet_ibn import *
+from .osnet_ain import *
 from .discriminator import create_cam_disc, create_pose_disc
 
 
@@ -12,7 +13,11 @@ __factory = {
     'resnet101': resnet101,
     'resnet152': resnet152,
     'resnet_ibn50a': resnet_ibn50a,
-    'resnet_ibn101a': resnet_ibn101a
+    'resnet_ibn101a': resnet_ibn101a,
+    'osnet_ain_x1_0':osnet_ain_x1_0, 
+    'osnet_ain_x0_75':osnet_ain_x0_75, 
+    'osnet_ain_x0_5':osnet_ain_x0_5, 
+    'osnet_ain_x0_25':osnet_ain_x0_25
 }
 
 
