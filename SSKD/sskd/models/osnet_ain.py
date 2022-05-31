@@ -125,6 +125,7 @@ class Conv3x3(nn.Module):
 
 class LightConv3x3(nn.Module):
     """Lightweight 3x3 convolution.
+
     1x1 (linear) + dw 3x3 (nonlinear).
     """
 
@@ -361,9 +362,6 @@ class OSNet(nn.Module):
         # identity classification layer
         self.classifier = nn.Linear(self.feature_dim, num_classes)
 
-        # BNNeck
-        self.bn = nn.BatchNorm1d(self.feature_dim)
-
         self._init_params()
 
     def _make_layer(self, blocks, layer, in_channels, out_channels):
@@ -385,7 +383,7 @@ class OSNet(nn.Module):
         for dim in fc_dims:
             layers.append(nn.Linear(input_dim, dim))
             layers.append(nn.BatchNorm1d(dim))
-            layers.append(nn.ReLU())
+            layers.append(nn.PReLU())
             if dropout_p is not None:
                 layers.append(nn.Dropout(p=dropout_p))
             input_dim = dim
@@ -441,7 +439,7 @@ class OSNet(nn.Module):
             v = self.fc(v)
         if not self.training:
             return v
-        y = self.classifier(self.bn(v))
+        y = self.classifier(v)
         if self.loss == 'softmax':
             return y
         elif self.loss == 'triplet':
@@ -552,7 +550,7 @@ def osnet_ain_x1_0(
 
 
 def osnet_ain_x0_75(
-    num_classes=1000, pretrained=True, loss='softmax', **kwargs
+    num_classes=1000, pretrained=True, loss='triplet', **kwargs
 ):
     model = OSNet(
         num_classes,
@@ -592,7 +590,7 @@ def osnet_ain_x0_5(
 
 
 def osnet_ain_x0_25(
-    num_classes=1000, pretrained=True, loss='softmax', **kwargs
+    num_classes=1000, pretrained=True, loss='triplet', **kwargs
 ):
     model = OSNet(
         num_classes,

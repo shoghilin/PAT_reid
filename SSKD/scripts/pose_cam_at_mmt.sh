@@ -63,18 +63,18 @@ python examples/pose_train.py -ds ${SOURCE} -dt ${TARGET} -a ${ARCH} \
 	# --rr-gpu 
 
 
-SOURCE=dukemtmc-reid
-TARGET=market1501
-CUDA_VISIBLE_DEVICES=${CUDA} \
-python examples/pose_train.py -ds ${SOURCE} -dt ${TARGET} -a ${ARCH} \
-	--num-instances 8 --lr 0.00035 --iters ${ITERS} -b 64 --epochs 40 \
-	--soft-ce-weight 0.5 --soft-tri-weight 0.8 --dropout 0 --lambda-value 0 \
-	--init-1 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
-	--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
-	--logs-dir ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pose-mmt \
-    --data-dir ${DATA_PATH} --print-freq 50 --wo_cat\
-	--pose_reid_weight 0.3 \
-	# --rr-gpu 
+# SOURCE=dukemtmc-reid
+# TARGET=market1501
+# CUDA_VISIBLE_DEVICES=${CUDA} \
+# python examples/pose_train.py -ds ${SOURCE} -dt ${TARGET} -a ${ARCH} \
+# 	--num-instances 8 --lr 0.00035 --iters ${ITERS} -b 64 --epochs 40 \
+# 	--soft-ce-weight 0.5 --soft-tri-weight 0.8 --dropout 0 --lambda-value 0 \
+# 	--init-1 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
+# 	--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
+# 	--logs-dir ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pose-mmt \
+#     --data-dir ${DATA_PATH} --print-freq 50 --wo_cat\
+# 	--pose_reid_weight 0.3 \
+# 	# --rr-gpu 
 
 # # # MMT + CAT
 # CUDA_VISIBLE_DEVICES=${CUDA} \
