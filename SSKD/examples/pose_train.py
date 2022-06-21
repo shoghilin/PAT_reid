@@ -146,6 +146,21 @@ def main():
 
     main_worker(args)
 
+def compute_weight(num_cam):
+    import pandas as pd
+    d_dict = {'id':[], 'variance':[], 'value':[], 'num_sample':[]}
+    for k in num_cam.keys():
+        d = np.array(num_cam[k])
+        variance = np.power(d - d.mean(), 2).sum() / d.sum()
+        d_dict['id'].append(k)
+        d_dict['variance'].append(variance)
+        d_dict['value'].append(num_cam[k])
+        d_dict['num_sample'].append(d.sum())
+    df = pd.DataFrame.from_dict(d_dict).sort_values('id')
+    minmax = lambda var: (var - min(var)) / (max(var) - min(var))
+    df['weight'] = (1 - minmax(df['variance'].values))
+    return torch.Tensor(df['weight'].values)
+
 
 def main_worker(args):
     global start_epoch, best_mAP
@@ -209,6 +224,10 @@ def main_worker(args):
         args.num_clusters = num_ids
         print('\n Clustered into {} classes \n'.format(args.num_clusters))
 
+        # record the data balance
+        num_cam = {id:torch.Tensor([0 for _ in range(args.c_dim)]) for id in range(args.num_clusters)}
+        num_pose = {id:torch.Tensor([0 for _ in range(args.num_pose_cluster)]) for id in range(args.num_clusters)}
+
         # generate new dataset and calculate cluster centers
         new_dataset = []
         cluster_centers = collections.defaultdict(list)
@@ -216,6 +235,21 @@ def main_worker(args):
             if label==-1: continue
             new_dataset.append((fname, label, cid, poseid))
             cluster_centers[label].append(cf[i])
+
+            num_cam[label][cid] += 1
+            num_pose[label][poseid] += 1
+        
+        # import pickle, os
+        # os.makedirs('./distribution/', exist_ok=True)
+        # with open(f"./distribution/cam_dis_{epoch}.pkl", "wb") as f:
+        #     pickle.dump(num_cam, f)
+        # with open(f"./distribution/pose_dis_{epoch}.pkl", "wb") as f:
+        #     pickle.dump(num_pose, f)
+
+        cam_weight = compute_weight(num_cam)
+        pose_weight = compute_weight(num_pose)
+        # cam_weight = torch.ones_like(cam_weight) / 10
+        # pose_weight = torch.ones_like(pose_weight) / 10
 
         cluster_centers = [torch.stack(cluster_centers[idx]).mean(0) for idx in sorted(cluster_centers.keys())]
         cluster_centers = torch.stack(cluster_centers)
@@ -241,7 +275,7 @@ def main_worker(args):
         disc_optimizer = [torch.optim.Adam(cam_disc.parameters()), torch.optim.Adam(pose_disc.parameters())]
 
         # Trainer
-        trainer = ATMMTTrainer(model_1, model_2, model_1_ema, model_2_ema, cam_disc, pose_disc, args,
+        trainer = ATMMTTrainer(model_1, model_2, model_1_ema, model_2_ema, cam_disc, pose_disc, cam_weight, pose_weight, args,
                                 num_cluster=args.num_clusters, alpha=args.alpha)
 
         train_loader_target.new_epoch()

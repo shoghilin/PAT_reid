@@ -3,6 +3,34 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import *
 
+class CrossEntropyLabelWeight(nn.Module):
+	"""Cross entropy loss with label weighting.
+
+	Args:
+		num_classes (int): number of classes.
+		id_weight (float): weighting for each identity.
+	"""
+
+	def __init__(self, num_classes, id_weight):
+		super(CrossEntropyLabelWeight, self).__init__()
+		self.num_classes = num_classes
+		self.id_weight = id_weight.cuda()
+		self.logsoftmax = nn.LogSoftmax(dim=1).cuda()
+		self.softmax = nn.Softmax(dim=1).cuda()
+
+	def forward(self, inputs, targets, pid, gamma=0):
+		"""
+		Args:
+			inputs: prediction matrix (before softmax) with shape (batch_size, num_classes)
+			targets: ground truth labels with shape (num_classes)
+		"""
+		log_probs = self.logsoftmax(inputs)
+		alpha = torch.unsqueeze(self.id_weight[pid], dim=1) * 10
+		targets = torch.zeros_like(log_probs).scatter_(1, targets.unsqueeze(1), 1)
+		probs = self.softmax(inputs)
+		loss = (- alpha * targets * torch.pow(1-probs, gamma) * log_probs).mean(0).sum()
+		return loss
+
 
 class CrossEntropyLabelSmooth(nn.Module):
 	"""Cross entropy loss with label smoothing regularizer.

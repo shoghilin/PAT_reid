@@ -6,7 +6,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 
 from .evaluation_metrics import accuracy
-from .loss import TripletLoss, CrossEntropyLabelSmooth, SoftTripletLoss, SoftEntropy, MultiSimilarityLoss
+from .loss import TripletLoss, CrossEntropyLabelSmooth, SoftTripletLoss, SoftEntropy, MultiSimilarityLoss, CrossEntropyLabelWeight
 from .utils.meters import AverageMeter
 
 
@@ -445,7 +445,7 @@ class ATMMTTrainer(object):
     Camera and pose discriminator is conducted in this framework.
     '''
     def __init__(self, model_1, model_2,
-                       model_1_ema, model_2_ema, cam_disc, pose_disc, args, num_cluster=500, alpha=0.999):
+                       model_1_ema, model_2_ema, cam_disc, pose_disc, cam_weight, pose_weight, args, num_cluster=500, alpha=0.999):
         super(ATMMTTrainer, self).__init__()
         self.model_1 = model_1
         self.model_2 = model_2
@@ -465,18 +465,20 @@ class ATMMTTrainer(object):
         self.criterion_tri = SoftTripletLoss(margin=0.0).cuda()
         self.criterion_tri_soft = SoftTripletLoss(margin=None).cuda()
         self.criterion_disc = nn.CrossEntropyLoss()
+        self.criterion_cam_disc = CrossEntropyLabelWeight(num_cluster, id_weight=cam_weight).cuda()
+        self.criterion_pose_disc = CrossEntropyLabelWeight(num_cluster, id_weight=pose_weight).cuda()
 
-    def update_cam_disc(self, f_out, c_org, disc_optimizer):
+    def update_cam_disc(self, f_out, c_org, pid, disc_optimizer):
         logit = self.cam_disc(f_out.detach())
-        cam_loss = self.criterion_disc(logit, c_org)
+        cam_loss = self.criterion_cam_disc(logit, c_org, pid)
         disc_optimizer[0].zero_grad()
         cam_loss.backward()
         disc_optimizer[0].step()
         return cam_loss
 
-    def update_pose_disc(self, f_out, p_org, disc_optimizer):
+    def update_pose_disc(self, f_out, p_org, pid, disc_optimizer):
         logit = self.pose_disc(f_out.detach())
-        pose_loss = self.criterion_disc(logit, p_org)
+        pose_loss = self.criterion_pose_disc(logit, p_org, pid)
         disc_optimizer[1].zero_grad()
         pose_loss.backward()
         disc_optimizer[1].step()
@@ -521,16 +523,16 @@ class ATMMTTrainer(object):
 
             # update cam discriminator
             if not self.args.wo_cat:
-                loss_cam_disc  = (self.update_cam_disc(f_out_t1, c_org, disc_optimizer) + \
-                                self.update_cam_disc(f_out_t2, c_org, disc_optimizer)) / 2
+                loss_cam_disc  = (self.update_cam_disc(f_out_t1, c_org, targets, disc_optimizer) + \
+                                self.update_cam_disc(f_out_t2, c_org, targets, disc_optimizer)) / 2
             else:
                 loss_cam_disc = torch.zeros((1,), device=self.args.device)
             losses_disc[0].update(loss_cam_disc.item())
 
             # update pose discriminator
             if not self.args.wo_pat:
-                loss_pose_disc = (self.update_pose_disc(f_out_t1, p_org, disc_optimizer) + \
-                                self.update_pose_disc(f_out_t2, p_org, disc_optimizer)) / 2
+                loss_pose_disc = (self.update_pose_disc(f_out_t1, p_org, targets, disc_optimizer) + \
+                                self.update_pose_disc(f_out_t2, p_org, targets, disc_optimizer)) / 2
             else:
                 loss_pose_disc = torch.zeros((1,), device=self.args.device)
             losses_disc[1].update(loss_pose_disc.item())
