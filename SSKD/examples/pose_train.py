@@ -30,6 +30,7 @@ from sskd.utils.rerank import compute_jaccard_dist
 
 
 start_epoch = best_mAP = 0
+num_cam = {"dukemtmc-reid":8, "market1501":6}
 
 def get_data(name, data_dir):
     root = osp.join(data_dir, name)
@@ -120,8 +121,8 @@ def create_model(args, classes):
 
 
 def create_disc(args):
-    cam_disc = models.create_cam_disc(args)
-    pose_disc = models.create_pose_disc(args)
+    cam_disc = models.create_disc(args, mode='camera')
+    pose_disc = models.create_disc(args, mode='pose')
     cam_disc = nn.DataParallel(cam_disc)
     pose_disc = nn.DataParallel(pose_disc)
     return cam_disc.to(args.device), pose_disc.to(args.device) 
@@ -134,14 +135,8 @@ def main():
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)
         cudnn.deterministic = True
-
-    if args.dataset_target == "dukemtmc-reid":
-        args.c_dim = 8
-    elif args.dataset_target == "market1501":
-        args.c_dim = 6
-    else:
-        raise NameError('Target set not included')
     
+    args.c_dim = num_cam[args.dataset_target]
     args.num_pose_cluster = args.c_dim * 8
 
     main_worker(args)

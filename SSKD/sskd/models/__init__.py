@@ -3,7 +3,8 @@ from __future__ import absolute_import
 from .resnet import *
 from .resnet_ibn import *
 from .osnet_ain import *
-from .discriminator import create_cam_disc, create_pose_disc
+# from .discriminator import create_cam_disc, create_pose_disc
+from .discriminator import create_disc
 
 
 __factory = {
