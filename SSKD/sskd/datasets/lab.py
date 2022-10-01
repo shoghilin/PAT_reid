@@ -23,6 +23,7 @@ class LAB(BaseImageDataset):
 
         self._check_before_run()
 
+        self.num_pose_cluster = 0
         train = self._process_dir()
         query = self._process_dir_test(self.query_dir)
         gallery = self._process_dir_test(self.gallery_dir)
@@ -56,6 +57,10 @@ class LAB(BaseImageDataset):
             else:
                 poseid = self.pose[osp.splitext(osp.basename(img_path))[0]]
                 dataset.append((img_path, 0, int(camid), poseid))
+
+                
+            if self.num_pose_cluster-1 < poseid:
+                self.num_pose_cluster = poseid+1
         # print(dataset)
 
         return dataset

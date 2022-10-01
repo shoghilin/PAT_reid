@@ -4,6 +4,9 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 __all__ = [
     'osnet_ain_x1_0', 'osnet_ain_x0_75', 'osnet_ain_x0_5', 'osnet_ain_x0_25'
 ]

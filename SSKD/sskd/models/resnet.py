@@ -6,6 +6,9 @@ from torch.nn import init
 import torchvision
 import torch
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152']

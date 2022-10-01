@@ -30,7 +30,6 @@ from sskd.utils.rerank import compute_jaccard_dist
 
 
 start_epoch = best_mAP = 0
-num_cam = {"dukemtmc-reid":8, "market1501":6}
 
 def get_data(name, data_dir):
     root = osp.join(data_dir, name)
@@ -136,9 +135,6 @@ def main():
         torch.manual_seed(args.seed)
         cudnn.deterministic = True
     
-    args.c_dim = num_cam[args.dataset_target]
-    args.num_pose_cluster = args.c_dim * 8
-
     main_worker(args)
 
 
@@ -159,6 +155,10 @@ def main_worker(args):
     test_loader_target = get_test_loader(dataset_target, args.height, args.width, args.batch_size, args.workers)
     tar_cluster_loader = get_test_loader(dataset_target, args.height, args.width, args.batch_size, args.workers, testset=dataset_target.train)
     sour_cluster_loader = get_test_loader(dataset_source, args.height, args.width, args.batch_size, args.workers, testset=dataset_source.train)
+
+    # config
+    args.num_pose_cluster = dataset_target.num_pose_cluster
+    args.c_dim = dataset_target.num_train_cams
 
     # Create model
     model_1, model_2, model_1_ema, model_2_ema = create_model(args, len(dataset_target.train))
@@ -233,7 +233,7 @@ def main_worker(args):
                 continue
             params += [{"params": [value], "lr": args.lr, "weight_decay": args.weight_decay}]
         optimizer = torch.optim.Adam(params)
-        disc_optimizer = [torch.optim.Adam(cam_disc.parameters()), torch.optim.Adam(pose_disc.parameters())]
+        disc_optimizer = [torch.optim.Adam(cam_disc.parameters(), lr=0.003), torch.optim.Adam(pose_disc.parameters(), lr=0.003)]
 
         # Trainer
         trainer = ATMMTTrainer(model_1, model_2, model_1_ema, model_2_ema, cam_disc, pose_disc, args,

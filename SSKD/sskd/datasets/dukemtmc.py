@@ -42,6 +42,7 @@ class DukeMTMC(BaseImageDataset):
         self._download_data()
         self._check_before_run()
 
+        self.num_pose_cluster = 0
         train = self._process_dir(self.train_dir, relabel=True)
         query = self._process_dir(self.query_dir, relabel=False)
         gallery = self._process_dir(self.gallery_dir, relabel=False)
@@ -108,6 +109,9 @@ class DukeMTMC(BaseImageDataset):
                 else:
                     poseid = self.pose[osp.splitext(osp.basename(img_path))[0]]
                     dataset.append((img_path, pid, camid, poseid))
+
+                if self.num_pose_cluster-1 < poseid:
+                    self.num_pose_cluster = poseid+1
             else:
                 dataset.append((img_path, pid, camid, -1))
 
