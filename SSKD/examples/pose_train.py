@@ -267,7 +267,7 @@ def main_worker(args):
     print ('Test on the best model.')
     checkpoint = load_checkpoint(osp.join(args.logs_dir, 'model_best.pth.tar'))
     model_1_ema.load_state_dict(checkpoint['state_dict'])
-    evaluator_1_ema.evaluate(test_loader_target, dataset_target.query, dataset_target.gallery, cmc_flag=True)
+    evaluator_1_ema.evaluate(test_loader_target, dataset_target.query, dataset_target.gallery, cmc_flag=True, visrank=args.visrank, args=args)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="MMT Training")
@@ -321,6 +321,10 @@ if __name__ == '__main__':
                         help="Without camera discriminator.")
     parser.add_argument('--wo_pat', action='store_true', 
                         help="Without pose discriminator.")
+    parser.add_argument('--visrank', action='store_true',
+                        help="visualize ranking")
+    parser.add_argument('--visrank_topk', type=int, default=10)
+    parser.add_argument('--data_type', default="image")
     # path
     working_dir = osp.dirname(osp.abspath(__file__))
     parser.add_argument('--data-dir', type=str, metavar='PATH',

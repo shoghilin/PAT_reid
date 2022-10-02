@@ -3,7 +3,8 @@ import argparse
 import os.path as osp
 import random
 import numpy as np
-import sys
+import sys, time
+sys.path.append('.')
 
 import torch
 from torch import nn
@@ -81,7 +82,7 @@ def main_worker(args):
     # Evaluator
     evaluator = Evaluator(model)
     print("Test on the target domain of {}:".format(args.dataset_target))
-    evaluator.evaluate(test_loader_target, dataset_target.query, dataset_target.gallery, cmc_flag=True, rerank=args.rerank)
+    evaluator.evaluate(test_loader_target, dataset_target.query, dataset_target.gallery, cmc_flag=True, rerank=args.rerank, visrank=args.visrank, args=args)
     return
 
 if __name__ == '__main__':
@@ -103,8 +104,14 @@ if __name__ == '__main__':
     parser.add_argument('--rerank', action='store_true',
                         help="evaluation only")
     parser.add_argument('--seed', type=int, default=1)
+    parser.add_argument('--visrank', action='store_true',
+                        help="visualize ranking")
+    parser.add_argument('--visrank_topk', type=int, default=10)
+    parser.add_argument('--data_type', default="image")
     # path
     working_dir = osp.dirname(osp.abspath(__file__))
     parser.add_argument('--data-dir', type=str, metavar='PATH',
                         default=osp.join(working_dir, 'data'))
+    parser.add_argument('--logs-dir', type=str, metavar='PATH',
+                        default=osp.join(working_dir, 'logs'))
     main()

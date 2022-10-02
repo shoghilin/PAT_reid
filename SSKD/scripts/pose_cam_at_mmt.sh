@@ -37,8 +37,8 @@ mmt_pcat(){
 	python examples/pose_train.py -ds ${SOURCE} -dt ${TARGET} -a ${ARCH} \
 		--num-instances 8 --lr 0.00035 --iters ${ITERS} -b 64 --epochs 40 \
 		--soft-ce-weight 0.5 --soft-tri-weight 0.8 --dropout 0 --lambda-value 0 \
-		--init-1 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
-		--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
+		--init-1 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-1/model_best.pth.tar \
+		--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-2/model_best.pth.tar \
 		--logs-dir ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pose-cam-mmt \
 	    --data-dir ${DATA_PATH} --print-freq 50\
 		--pose_reid_weight 0.3 --cam_reid_weight 0.3\
@@ -50,8 +50,8 @@ mmt_pat(){
 	python examples/pose_train.py -ds ${SOURCE} -dt ${TARGET} -a ${ARCH} \
 		--num-instances 8 --lr 0.00035 --iters ${ITERS} -b 64 --epochs 40 \
 		--soft-ce-weight 0.5 --soft-tri-weight 0.8 --dropout 0 --lambda-value 0 \
-		--init-1 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
-		--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
+		--init-1 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-1/model_best.pth.tar \
+		--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-2/model_best.pth.tar \
 		--logs-dir ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pose-mmt \
 		--data-dir ${DATA_PATH} --print-freq 50 --wo_cat\
 		--pose_reid_weight 0.3 \
@@ -63,8 +63,8 @@ mmt_cat(){
 	python examples/pose_train.py -ds ${SOURCE} -dt ${TARGET} -a ${ARCH} \
 		--num-instances 8 --lr 0.00035 --iters ${ITERS} -b 64 --epochs 40 \
 		--soft-ce-weight 0.5 --soft-tri-weight 0.8 --dropout 0 --lambda-value 0 \
-		--init-1 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
-		--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
+		--init-1 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-1/model_best.pth.tar \
+		--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-2/model_best.pth.tar \
 		--logs-dir ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-cam-mmt \
 	    --data-dir ${DATA_PATH} --print-freq 50 --wo_pat\
 		--cam_reid_weight 0.3 \
@@ -76,8 +76,8 @@ mmt(){
 	python examples/pose_train.py -ds ${SOURCE} -dt ${TARGET} -a ${ARCH} \
 		--num-instances 8 --lr 0.00035 --iters ${ITERS} -b 64 --epochs 40 \
 		--soft-ce-weight 0.5 --soft-tri-weight 0.8 --dropout 0 --lambda-value 0 \
-		--init-1 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
-		--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-3/model_best.pth.tar \
+		--init-1 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-1/model_best.pth.tar \
+		--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-2/model_best.pth.tar \
 		--logs-dir ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-mmt \
 		--data-dir ${DATA_PATH} --print-freq 50 --wo_cat --wo_pat\
 		# --rr-gpu 
@@ -87,7 +87,7 @@ run(){
 	echo "Training ${SOURCE} to ${TARGET}" >> "training_time.txt"
 	d1=$(date +"%s")
 
-	if [ "$MODE" = "None" ]; then
+	if [ "$MODE" = "MMT" ]; then
 		mmt
 	elif [ "$MODE" =  "PAT" ]; then
 		mmt_pat	
@@ -110,5 +110,11 @@ run(){
 # pretrain
 
 # training
-MODE="PAT"
+# MODE="PAT"
+# run
+
+MODE="CAT"
 run
+
+# MODE="MMT"
+# run

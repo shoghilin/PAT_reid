@@ -2,12 +2,14 @@ from __future__ import print_function, absolute_import
 import time
 from collections import OrderedDict
 import numpy as np
+import os.path as osp
 import torch
 
 from .evaluation_metrics import cmc, mean_ap
 from .feature_extraction import extract_cnn_feature
 from .utils.meters import AverageMeter
 from .utils.rerank import re_ranking
+from .utils.reidtools import visualize_ranked_results
 
 
 def extract_features(model, data_loader, print_freq=100, metric=None):
@@ -107,13 +109,25 @@ class Evaluator(object):
         super(Evaluator, self).__init__()
         self.model = model
 
-    def evaluate(self, data_loader, query, gallery, metric=None, cmc_flag=False, rerank=False, pre_features=None):
+    def evaluate(self, data_loader, query, gallery, metric=None, cmc_flag=False, rerank=False, pre_features=None, visrank=False, args=None):
         if (pre_features is None):
             features, _ = extract_features(self.model, data_loader)
         else:
             features = pre_features
         distmat, query_features, gallery_features = pairwise_distance(features, query, gallery, metric=metric)
         results = evaluate_all(query_features, gallery_features, distmat, query=query, gallery=gallery, cmc_flag=cmc_flag)
+        
+        if visrank:
+            visualize_ranked_results(
+                distmat,
+                (query, gallery),
+                args.data_type,
+                width=args.width,
+                height=args.height,
+                save_dir=osp.join(args.logs_dir, 'visrank_' + args.dataset_target),
+                topk=args.visrank_topk
+            )
+
         if (not rerank):
             return results
 
