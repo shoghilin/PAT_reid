@@ -32,7 +32,13 @@ class ResNet(nn.Module):
         # Construct base (pretrained) resnet
         if depth not in ResNet.__factory:
             raise KeyError("Unsupported depth:", depth)
-        resnet = ResNet.__factory[depth](pretrained=pretrained)
+
+        if pretrained:
+            weights = torchvision.models.ResNet50_Weights.DEFAULT
+            resnet = ResNet.__factory[depth](weights=weights)
+        else:
+            resnet = ResNet.__factory[depth](weights=None)
+            
         resnet.layer4[0].conv2.stride = (1,1)
         resnet.layer4[0].downsample[0].stride = (1,1)
         self.base = nn.Sequential(
@@ -122,8 +128,13 @@ class ResNet(nn.Module):
                 init.normal_(m.weight, std=0.001)
                 if m.bias is not None:
                     init.constant_(m.bias, 0)
+        
+        if self.pretrained:
+            weights = torchvision.models.ResNet50_Weights.DEFAULT
+            resnet = ResNet.__factory[self.depth](weights=weights)
+        else:
+            resnet = ResNet.__factory[self.depth](weights=None)
 
-        resnet = ResNet.__factory[self.depth](pretrained=self.pretrained)
         self.base[0].load_state_dict(resnet.conv1.state_dict())
         self.base[1].load_state_dict(resnet.bn1.state_dict())
         self.base[2].load_state_dict(resnet.maxpool.state_dict())

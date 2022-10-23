@@ -164,6 +164,139 @@ class ClusterBaseTrainer(object):
         targets = pids.cuda()
         return inputs, targets
 
+class ATClusterBaseTrainer(object):
+    def __init__(self, model, num_cluster=500):
+        super(ClusterBaseTrainer, self).__init__()
+        self.model = model
+        self.num_cluster = num_cluster
+
+        self.criterion_ce = CrossEntropyLabelSmooth(num_cluster).cuda()
+        self.criterion_tri = SoftTripletLoss(margin=0.0).cuda()
+        self.criterion_ms = MultiSimilarityLoss().cuda()
+        self.criterion_disc = nn.CrossEntropyLoss()
+
+    def update_cam_disc(self, f_out, c_org, disc_optimizer):
+        logit = self.cam_disc(f_out.detach())
+        cam_loss = self.criterion_disc(logit, c_org)
+        disc_optimizer[0].zero_grad()
+        cam_loss.backward()
+        disc_optimizer[0].step()
+        return cam_loss
+
+    def update_pose_disc(self, f_out, p_org, disc_optimizer):
+        logit = self.pose_disc(f_out.detach())
+        pose_loss = self.criterion_disc(logit, p_org)
+        disc_optimizer[1].zero_grad()
+        pose_loss.backward()
+        disc_optimizer[1].step()
+        return pose_loss
+
+    def train(self, epoch, data_loader_target, optimizer, disc_optimizer, 
+                 pose_reid_weight=0.5, cam_reid_weight=0.5, print_freq=1, train_iters=200):
+        self.model.train()
+
+        batch_time = AverageMeter()
+        data_time = AverageMeter()
+
+        losses_ce = AverageMeter()
+        losses_tri = AverageMeter()
+        precisions = AverageMeter()
+        losses_disc = [AverageMeter(),AverageMeter()]
+        losses_disc_reid = [AverageMeter(),AverageMeter()]
+
+        end = time.time()
+        for i in range(train_iters):
+            target_inputs = data_loader_target.next()
+            data_time.update(time.time() - end)
+
+            # process inputs
+            inputs, targets, c_org, p_org = self._parse_data(target_inputs)
+
+            # forward
+            f_out_t, p_out_t = self.model(inputs)
+            p_out_t = p_out_t[:,:self.num_cluster]
+
+            
+
+            # update cam discriminator
+            if not self.args.wo_cat:
+                loss_cam_disc  = self.update_cam_disc(f_out_t, c_org, disc_optimizer)
+            else:
+                loss_cam_disc = torch.zeros((1,), device=self.args.device)
+            losses_disc[0].update(loss_cam_disc.item())
+
+            # update pose discriminator
+            if not self.args.wo_pat:
+                loss_pose_disc = self.update_pose_disc(f_out_t, p_org, disc_optimizer)
+            else:
+                loss_pose_disc = torch.zeros((1,), device=self.args.device)
+            losses_disc[1].update(loss_pose_disc.item())
+
+
+            loss_ce = self.criterion_ce(p_out_t, targets)
+            loss_tri = self.criterion_tri(f_out_t, f_out_t, targets)
+
+            # compute camera adversarial training loss
+            if not self.args.wo_cat:
+                logit_t = self.cam_disc(f_out_t)
+                loss_cam_reid = - self.criterion_disc(logit_t, c_org)
+            else:
+                loss_cam_reid = torch.zeros((1,), device=self.args.device)
+
+            # compute pose adversarial training loss
+            if not self.args.wo_pat:
+                logit_t = self.pose_disc(f_out_t)
+                loss_pose_reid = - self.criterion_disc(logit_t, p_org)
+            else:
+                loss_pose_reid = torch.zeros((1,), device=self.args.device)
+
+            loss = loss_ce + loss_tri \
+                + loss_cam_reid * cam_reid_weight + loss_pose_reid * pose_reid_weight
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            prec, = accuracy(p_out_t.data, targets.data)
+
+            losses_ce.update(loss_ce.item())
+            losses_tri.update(loss_tri.item())
+            losses_disc_reid[0].update(loss_cam_reid.item())
+            losses_disc_reid[1].update(loss_pose_reid.item())
+            precisions.update(prec[0])
+
+            # print log #
+            batch_time.update(time.time() - end)
+            end = time.time()
+
+            if (i + 1) % print_freq == 0:
+                print('Epoch: [{}][{}/{}]\t'
+                      'Time {:.3f} ({:.3f})\t'
+                      'Data {:.3f} ({:.3f})\t'
+                      'Loss_ce {:.3f} ({:.3f})\t'
+                      'Loss_tri {:.3f} ({:.3f})\t'
+                      'Loss_cam_disc {:.3f} \t'
+                      'Loss_cam_reid {:.3f} \t'
+                      'Loss_pose_disc {:.3f} \t'
+                      'Loss_pose_reid {:.3f} \t'
+                      'Prec {:.2%} ({:.2%})\t'
+                      .format(epoch, i + 1, len(data_loader_target),
+                              batch_time.val, batch_time.avg,
+                              data_time.val, data_time.avg,
+                              losses_ce.val, losses_ce.avg,
+                              losses_tri.val, losses_tri.avg,
+                              losses_disc[0].avg, losses_disc_reid[0].avg, 
+                              losses_disc[1].avg, losses_disc_reid[1].avg, 
+                              precisions.val, precisions.avg))
+
+    def _parse_data(self, inputs):
+        imgs, _, pids, c_org, p_org  = inputs
+        inputs = imgs.cuda()
+        targets = pids.cuda()
+        c_org = c_org.cuda()
+        p_org = p_org.cuda()
+        return inputs, targets, c_org, p_org
+
 class MMTTrainer(object):
     def __init__(self, model_1, model_2,
                        model_1_ema, model_2_ema, num_cluster=500, alpha=0.999):

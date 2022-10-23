@@ -169,7 +169,7 @@ def compute_jaccard_dist(target_features, k1=20, k2=6, print_flag=True,
         V[i,k_reciprocal_expansion_index] = weight/torch.sum(weight)
 
     if k2 != 1:
-        k2_rank = initial_rank[:,:k2].clone().view(-1)
+        k2_rank = initial_rank[:,:k2].clone().reshape(-1)
         V_qe = V[k2_rank]
         V_qe = V_qe.view(initial_rank.size(0),k2,-1).sum(1)
         V_qe /= k2
