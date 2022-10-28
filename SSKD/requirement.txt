@@ -1,0 +1,4 @@
+scikit-learn
+metric_learn
+h5py
+opencv-python

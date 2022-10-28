@@ -12,7 +12,7 @@ torchvision >= 0.2.1
 bash scripts/pose_cam_at_mmt.sh $SOURCE $TARGET $ARCH $mode
 ```
 Option
-Dataset : "market1501", "dukemtmc-reid", "lab_data"
+Dataset : "market1501", "dukemtmc-reid", "lab_data", "msmt17", "cuhk03"
 Arch : "resnet50", "resnet_ibn50a", "osnet_ain_x0_5"
 
 Step 1: Train on source dataset

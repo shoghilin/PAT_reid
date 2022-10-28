@@ -4,12 +4,16 @@ import warnings
 from .lab import LAB
 from .dukemtmc import DukeMTMC
 from .market1501 import Market1501
+from .msmt17 import MSMT17
+from .cuhk03 import CUHK03
 
 
 __factory = {
     'market1501': Market1501,
     'dukemtmc-reid': DukeMTMC,
-    'lab_data':LAB
+    'msmt17' : MSMT17,
+    'cuhk03' : CUHK03,
+    'lab_data':LAB,
 }
 
 

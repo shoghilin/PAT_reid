@@ -74,7 +74,7 @@ class Preprocessor(Dataset):
         return img_1, img_2, pid, camid, poseid
 
     def _get_triplet_item(self, index):
-        fname, pid, camid, _ = self.dataset[index]
+        fname, pid, camid, poseid = self.dataset[index]
         fpath = fname
         if self.root is not None:
             fpath = osp.join(self.root, fname)
@@ -88,4 +88,4 @@ class Preprocessor(Dataset):
             img_2 = self.transform(img_2)
             img_3 = self.transform(img_3)
 
-        return img_1, img_2, img_3, pid
+        return img_1, img_2, img_3, pid, camid, poseid

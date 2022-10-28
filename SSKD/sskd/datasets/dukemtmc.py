@@ -25,7 +25,7 @@ class DukeMTMC(BaseImageDataset):
     """
     dataset_dir = ''
 
-    def __init__(self, root, verbose=True, pretrain=False, **kwargs):
+    def __init__(self, root, verbose=True, wo_filter=False, **kwargs):
         super(DukeMTMC, self).__init__()
         self.dataset_dir = osp.join(root, self.dataset_dir)
         self.dataset_url = 'http://vision.cs.duke.edu/DukeMTMC/data/misc/DukeMTMC-reID.zip'
@@ -34,7 +34,7 @@ class DukeMTMC(BaseImageDataset):
         self.gallery_dir = osp.join(self.dataset_dir, 'DukeMTMC-reID/bounding_box_test')
 
         # read the pose info
-        self.pretrain = pretrain
+        self.wo_filter = wo_filter
         pose_dir = osp.join(self.dataset_dir, 'DukeMTMC-reID/pose_labels_duke.json')
         with open(pose_dir, 'r') as f:
             self.pose = json.load(f)
@@ -103,7 +103,7 @@ class DukeMTMC(BaseImageDataset):
             assert 1 <= camid <= 8
             camid -= 1  # index starts from 0
             if relabel: pid = pid2label[pid]       
-            if dir_path == self.train_dir and not self.pretrain:
+            if dir_path == self.train_dir and not self.wo_filter:
                 if osp.splitext(osp.basename(img_path))[0] not in self.pose.keys():
                     continue
                 else:

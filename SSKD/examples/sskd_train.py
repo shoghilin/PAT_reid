@@ -41,7 +41,7 @@ def get_train_loader(dataset, height, width, batch_size, workers,
     normalizer = T.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225])
     train_transformer = T.Compose([
-             T.Resize((height, width), interpolation=3),
+             T.Resize((height, width), interpolation=T.InterpolationMode.BICUBIC),
              T.RandomHorizontalFlip(p=0.5),
              T.Pad(10),
              T.RandomCrop((height, width)),
@@ -69,7 +69,7 @@ def get_test_loader(dataset, height, width, batch_size, workers, testset=None):
                              std=[0.229, 0.224, 0.225])
 
     test_transformer = T.Compose([
-             T.Resize((height, width), interpolation=3),
+             T.Resize((height, width), interpolation=T.InterpolationMode.BICUBIC),
              T.ToTensor(),
              normalizer
          ])
@@ -209,9 +209,9 @@ def main_worker(args):
         # generate new dataset and calculate cluster centers
         new_dataset = []
         cluster_centers = collections.defaultdict(list)
-        for i, ((fname, _, cid), label) in enumerate(zip(dataset_target.train, labels)):
+        for i, ((fname, _, cid, poseid), label) in enumerate(zip(dataset_target.train, labels)):
             if label==-1: continue
-            new_dataset.append((fname,label,cid))
+            new_dataset.append((fname,label,cid,poseid))
             cluster_centers[label].append(cf[i])
 
         cluster_centers = [torch.stack(cluster_centers[idx]).mean(0) for idx in sorted(cluster_centers.keys())]

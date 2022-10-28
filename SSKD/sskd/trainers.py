@@ -409,10 +409,7 @@ class MMTTrainer(object):
             ema_param.data.mul_(alpha).add_(param.data, alpha=1 - alpha)
 
     def _parse_data(self, inputs):
-        imgs_1, imgs_2, pids = inputs
-        inputs_1 = imgs_1.cuda()
-        inputs_2 = imgs_2.cuda()
-        targets = pids.cuda()
+        inputs_1, inputs_2, targets, _, _ = map(lambda x:x.cuda(), inputs)
         return inputs_1, inputs_2, targets
 
 class ATMMTTrainer(object):
@@ -597,12 +594,7 @@ class ATMMTTrainer(object):
             ema_param.data.mul_(alpha).add_(param.data, alpha=1 - alpha)
             
     def _parse_data(self, inputs):
-        imgs_1, imgs_2, pids, c_org, p_org = inputs
-        inputs_1 = imgs_1.cuda()
-        inputs_2 = imgs_2.cuda()
-        targets = pids.cuda()
-        c_org = c_org.cuda()
-        p_org = p_org.cuda()
+        inputs_1, inputs_2, targets, c_org, p_org = map(lambda x:x.cuda(), inputs)
         return inputs_1, inputs_2, targets, c_org, p_org
 
 
@@ -752,16 +744,12 @@ class SSKDTrainer(object):
     def _update_ema_variables(self, model, ema_model, alpha, global_step):
         alpha = min(1 - 1 / (global_step + 1), alpha)
         for ema_param, param in zip(ema_model.parameters(), model.parameters()):
-            ema_param.data.mul_(alpha).add_(1 - alpha, param.data)
+            ema_param.data.mul_(alpha).add_(param.data, alpha=1 - alpha)
 
     def _parse_data(self, inputs):
-        imgs_1, imgs_2, imgs_3, pids = inputs
-        inputs_1 = imgs_1.cuda()
-        inputs_2 = imgs_2.cuda()
-        inputs_3 = imgs_3.cuda()
-        targets = pids.cuda()
+        inputs_1, inputs_2, inputs_3, targets, _, _ = map(lambda x:x.cuda(), inputs)
         return inputs_1, inputs_2, inputs_3, targets
-
+        
 class ATSSKDTrainer(object):
     def __init__(self, model_1, model_2, model_3,
                        model_1_ema, model_2_ema, model_3_ema, cam_disc, pose_disc, args, num_cluster=500, alpha=0.999):
@@ -971,15 +959,8 @@ class ATSSKDTrainer(object):
     def _update_ema_variables(self, model, ema_model, alpha, global_step):
         alpha = min(1 - 1 / (global_step + 1), alpha)
         for ema_param, param in zip(ema_model.parameters(), model.parameters()):
-            ema_param.data.mul_(alpha).add_(1 - alpha, param.data)
+            ema_param.data.mul_(alpha).add_(param.data, alpha=1 - alpha)
 
     def _parse_data(self, inputs):
-        imgs_1, imgs_2, imgs_3, pids, c_org, p_org  = inputs
-        # imgs_1, imgs_2, imgs_3, pids, c_org, p_org  = map(cuda, inputs)
-        inputs_1 = imgs_1.cuda()
-        inputs_2 = imgs_2.cuda()
-        inputs_3 = imgs_3.cuda()
-        targets = pids.cuda()
-        c_org = c_org.cuda()
-        p_org = p_org.cuda()
-        return inputs_1, inputs_2, inputs_3, targets, c_org, p_org 
+        inputs_1, inputs_2, inputs_3, targets, c_org, p_org = map(lambda x:x.cuda(), inputs)
+        return inputs_1, inputs_2, inputs_3, targets, c_org, p_org

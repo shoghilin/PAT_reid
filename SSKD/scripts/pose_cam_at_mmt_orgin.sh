@@ -10,7 +10,7 @@ DATA_PATH="../Datasets"
 
 # parameter
 ITERS=500
-WORKER=0
+WORKER=2
 
 # pose configuration
 POSE_PATH="../Datasets/market1501/Market-1501-v15.09.15"
@@ -42,20 +42,20 @@ mmt_pcat(){
 		--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-2/model_best.pth.tar \
 		--logs-dir ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pose-cam-mmt \
 	    --data-dir ${DATA_PATH} --print-freq 50\
-		--pose_reid_weight 0.3 --cam_reid_weight 0.3 -j ${WORKER} \
+		--pose_reid_weight 0.3 --cam_reid_weight 0.3\
 		# --rr-gpu 
 }
 
 mmt_pat(){
 	CUDA_VISIBLE_DEVICES=${CUDA} \
 	python examples/pose_train.py -ds ${SOURCE} -dt ${TARGET} -a ${ARCH} \
-		--num-instances 8 --lr 0.00035 --iters ${ITERS} -b 32 --epochs 40 \
+		--num-instances 8 --lr 0.00035 --iters ${ITERS} -b 64 --epochs 40 \
 		--soft-ce-weight 0.5 --soft-tri-weight 0.8 --dropout 0 --lambda-value 0 \
 		--init-1 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-1/model_best.pth.tar \
 		--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-2/model_best.pth.tar \
 		--logs-dir ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pose-mmt \
 		--data-dir ${DATA_PATH} --print-freq 50 --wo_cat\
-		--pose_reid_weight 0.3 -j ${WORKER}  \
+		--pose_reid_weight 0.3 \
 		# --rr-gpu 
 }
 
@@ -68,7 +68,7 @@ mmt_cat(){
 		--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-2/model_best.pth.tar \
 		--logs-dir ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-cam-mmt \
 	    --data-dir ${DATA_PATH} --print-freq 50 --wo_pat\
-		--cam_reid_weight 0.3 -j ${WORKER}  \
+		--cam_reid_weight 0.3 \
 		# --rr-gpu 
 }
 
@@ -80,7 +80,7 @@ mmt(){
 		--init-1 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-1/model_best.pth.tar \
 		--init-2 ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-pretrain-2/model_best.pth.tar \
 		--logs-dir ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-mmt \
-		--data-dir ${DATA_PATH} --print-freq 50 --wo_cat --wo_pat -j ${WORKER} \
+		--data-dir ${DATA_PATH} --print-freq 50 --wo_cat --wo_pat\
 		# --rr-gpu 
 }
 
@@ -105,14 +105,14 @@ run(){
 
 
 # Pretrain
-# SEED=1
-# pretrain
-# SEED=2
-# pretrain
+SEED=1
+pretrain
+SEED=2
+pretrain
 
 # training
-MODE="PAT"
-run
+# MODE="PAT"
+# run
 
 # MODE="CAT"
 # run
