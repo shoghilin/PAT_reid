@@ -192,7 +192,7 @@ def main_worker(args):
             tri_mat = np.triu(rerank_dist, 1) # tri_mat.dim=2
             tri_mat = tri_mat[np.nonzero(tri_mat)] # tri_mat.dim=1
             tri_mat = np.sort(tri_mat,axis=None)
-            rho = 1.6e-3
+            rho = 1.6e-3 if args.dataset_target != 'msmt17' else 7e-4
             top_num = np.round(rho*tri_mat.size).astype(int)
             eps = tri_mat[:top_num].mean()
             print('eps for cluster: {:.3f}'.format(eps))
