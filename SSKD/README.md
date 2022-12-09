@@ -1,11 +1,18 @@
 # Enhencing pose and camera invariance for UDA person re-identification
 
-# Requirements
-python 3.6
+# Setup environment
+Python version : 3.10.6
+Ptorch version : 1.13.0
+Torchvision version : 0.14.0 
+CUDA : 11.7
 
-PyTorch >= 1.1.1
+Install requirement
+```
+conda create -n pat python==3.10.6 -y
+conda activate pat
+pip --default-timeout=1000 install -r freeze_env/requirements.txt
+```
 
-torchvision >= 0.2.1
 
 # Running
 ```

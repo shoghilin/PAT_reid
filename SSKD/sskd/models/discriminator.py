@@ -3,9 +3,9 @@ from torch import nn
 
 def create_disc(args, mode):
     out_dim = {"pose":args.num_pose_cluster, "camera":args.c_dim}
-    if args.arch == "osnet_ain_x0_5":
+    if "osnet" in args.arch:
         return OSNet_AIN_DISC(out_dim[mode])
-    elif args.arch == "resnet50":
+    elif "resnet" in args.arch:
         return ResNet50_DISC(out_dim[mode])
     else:
         raise NameError(f"{mode} discriminator not found!!!")

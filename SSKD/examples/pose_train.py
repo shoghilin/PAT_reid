@@ -31,13 +31,13 @@ from sskd.utils.rerank import compute_jaccard_dist
 
 start_epoch = best_mAP = 0
 
-def get_data(name, data_dir):
+def get_data(name, data_dir, pose_dir):
     root = osp.join(data_dir, name)
-    dataset = datasets.create(name, root)
+    dataset = datasets.create(name, root, pose_dir=pose_dir)
     return dataset
 
 def get_train_loader(dataset, height, width, batch_size, workers,
-                    num_instances, iters, trainset=None):
+                    num_instances, iters, args, trainset=None):
 
     normalizer = T.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225])
@@ -59,7 +59,7 @@ def get_train_loader(dataset, height, width, batch_size, workers,
         sampler = None
     train_loader = IterLoader(
                 DataLoader(Preprocessor(train_set, root=dataset.images_dir,
-                                        transform=train_transformer, pose=True),
+                                        transform=train_transformer, mutual=args.wo_pat and args.wo_cat ,mmt_pose=not (args.wo_pat and args.wo_cat)),
                             batch_size=batch_size, num_workers=workers, sampler=sampler,
                             shuffle=not rmgs_flag, pin_memory=True, drop_last=True), length=iters)
 
@@ -129,6 +129,9 @@ def create_disc(args):
 def main():
     args = parser.parse_args()
 
+    args.pose_dir = osp.join(args.data_dir, "pose_labels",
+                                f"{args.pose_mode}-{args.none_mode}-{args.num_pose_cluster}")
+
     if args.seed is not None:
         random.seed(args.seed)
         np.random.seed(args.seed)
@@ -150,8 +153,8 @@ def main_worker(args):
 
     # Create data loaders
     iters = args.iters if (args.iters>0) else None
-    dataset_source = get_data(args.dataset_source, args.data_dir)
-    dataset_target = get_data(args.dataset_target, args.data_dir)
+    dataset_source = get_data(args.dataset_source, args.data_dir, args.pose_dir)
+    dataset_target = get_data(args.dataset_target, args.data_dir, args.pose_dir)
     test_loader_target = get_test_loader(dataset_target, args.height, args.width, args.batch_size, args.workers)
     tar_cluster_loader = get_test_loader(dataset_target, args.height, args.width, args.batch_size, args.workers, testset=dataset_target.train)
     sour_cluster_loader = get_test_loader(dataset_source, args.height, args.width, args.batch_size, args.workers, testset=dataset_source.train)
@@ -220,7 +223,7 @@ def main_worker(args):
         model_2_ema.module.classifier.weight.data[:args.num_clusters].copy_(F.normalize(cluster_centers, dim=1).float().cuda())
 
         train_loader_target = get_train_loader(dataset_target, args.height, args.width,
-                                            args.batch_size, args.workers, args.num_instances, iters, trainset=new_dataset)
+                                            args.batch_size, args.workers, args.num_instances, iters, args, trainset=new_dataset)
 
         # Optimizer
         params = []
@@ -289,6 +292,14 @@ if __name__ == '__main__':
                              "default: 0 (NOT USE)")
     parser.add_argument('--device', default=torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
                         help="use gpu or cpu to train model")
+    ## data - pose label
+    parser.add_argument('--pose_mode', default="each_cam", choices=["each_cam", "overall"],
+                        help="Clustering based on overall dataset or each camera.")
+    parser.add_argument('--none_mode', default="new_label", choices=["ignore", "cam_labels", "new_label"],
+                        help="Different way of dealing the samples which did not detect pose.")    
+    parser.add_argument('--num_pose_cluster', default='8', choices=['4', '8'],
+                        help="The number of pose cluster for overall dataset of each camera.")
+
     # model
     parser.add_argument('-a', '--arch', type=str, default='resnet50',
                         choices=models.names())
@@ -331,4 +342,12 @@ if __name__ == '__main__':
                         default=osp.join(working_dir, 'data'))
     parser.add_argument('--logs-dir', type=str, metavar='PATH',
                         default=osp.join(working_dir, 'logs'))
+    # counting training time
+    start_time = time.time()
     main()
+    training_time = time.gmtime(time.time()-start_time)
+    print("Training time : {}H{}M{}S".format(
+        training_time.tm_hour,
+        training_time.tm_min,
+        training_time.tm_sec
+    ))

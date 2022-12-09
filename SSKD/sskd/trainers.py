@@ -165,15 +165,21 @@ class ClusterBaseTrainer(object):
         return inputs, targets
 
 class ATClusterBaseTrainer(object):
-    def __init__(self, model, num_cluster=500):
-        super(ClusterBaseTrainer, self).__init__()
+    def __init__(self, model, cam_disc, pose_disc, args,  num_cluster=500):
+        super(ATClusterBaseTrainer, self).__init__()
         self.model = model
         self.num_cluster = num_cluster
+
+        # create both camera and pose discriminator
+        self.cam_disc = cam_disc
+        self.pose_disc = pose_disc
+        self.args = args
 
         self.criterion_ce = CrossEntropyLabelSmooth(num_cluster).cuda()
         self.criterion_tri = SoftTripletLoss(margin=0.0).cuda()
         self.criterion_ms = MultiSimilarityLoss().cuda()
         self.criterion_disc = nn.CrossEntropyLoss()
+        self.criterion_disc_pose = CrossEntropyLabelSmooth(args.num_pose_cluster).cuda()
 
     def update_cam_disc(self, f_out, c_org, disc_optimizer):
         logit = self.cam_disc(f_out.detach())
@@ -203,6 +209,10 @@ class ATClusterBaseTrainer(object):
         precisions = AverageMeter()
         losses_disc = [AverageMeter(),AverageMeter()]
         losses_disc_reid = [AverageMeter(),AverageMeter()]
+
+        if epoch >= 10:
+            cam_reid_weight = 0.1
+            pose_reid_weight = 0.1
 
         end = time.time()
         for i in range(train_iters):
@@ -246,7 +256,7 @@ class ATClusterBaseTrainer(object):
             # compute pose adversarial training loss
             if not self.args.wo_pat:
                 logit_t = self.pose_disc(f_out_t)
-                loss_pose_reid = - self.criterion_disc(logit_t, p_org)
+                loss_pose_reid = - self.criterion_disc_pose(logit_t, p_org)
             else:
                 loss_pose_reid = torch.zeros((1,), device=self.args.device)
 

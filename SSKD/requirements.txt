@@ -1,0 +1,5 @@
+scikit-learn==1.1.3
+metric-learn==0.6.2
+h5py==3.7.0
+opencv-python-headless==4.6.0.66
+gdown

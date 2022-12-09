@@ -25,10 +25,10 @@ from sskd.utils.lr_scheduler import WarmupMultiStepLR
 
 start_epoch = best_mAP = 0
 
-def get_data(name, data_dir, height, width, batch_size, workers, num_instances, iters=200):
+def get_data(name, data_dir, height, width, batch_size, workers, num_instances, pose_dir, iters=200):
     root = osp.join(data_dir, name)
 
-    dataset = datasets.create(name, root, pretrain=True)
+    dataset = datasets.create(name, root, pretrain=True, pose_dir=pose_dir)
 
     normalizer = T.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225])
@@ -75,6 +75,9 @@ def get_data(name, data_dir, height, width, batch_size, workers, num_instances, 
 def main():
     args = parser.parse_args()
 
+    args.pose_dir = osp.join(args.data_dir, "pose_labels",
+                                f"{args.pose_mode}-{args.none_mode}-{args.num_pose_cluster}")
+
     if args.seed is not None:
         random.seed(args.seed)
         np.random.seed(args.seed)
@@ -100,11 +103,11 @@ def main_worker(args):
     iters = args.iters if (args.iters>0) else None
     dataset_source, num_classes, train_loader_source, test_loader_source = \
         get_data(args.dataset_source, args.data_dir, args.height,
-                 args.width, args.batch_size, args.workers, args.num_instances, iters)
+                 args.width, args.batch_size, args.workers, args.num_instances, args.pose_dir, iters)
 
     dataset_target, _, train_loader_target, test_loader_target = \
         get_data(args.dataset_target, args.data_dir, args.height,
-                 args.width, args.batch_size, args.workers, 0, iters)
+                 args.width, args.batch_size, args.workers, 0, args.pose_dir, iters)
 
     # Create model
     model = models.create(args.arch, num_features=args.features, dropout=args.dropout, num_classes=num_classes)
@@ -165,7 +168,7 @@ def main_worker(args):
             print('\n * Finished epoch {:3d}  source mAP: {:5.1%}  best: {:5.1%}{}\n'.
                   format(epoch, mAP, best_mAP, ' *' if is_best else ''))
 
-    if args.dataset_target == "lab_data": return
+    # if args.dataset_target == "lab_data": return
     print("Test on target domain:")
     evaluator.evaluate(test_loader_target, dataset_target.query, dataset_target.gallery, cmc_flag=True, rerank=args.rerank)
 
@@ -186,6 +189,13 @@ if __name__ == '__main__':
                              "(batch_size // num_instances) identities, and "
                              "each identity has num_instances instances, "
                              "default: 0 (NOT USE)")
+    ## data - pose label
+    parser.add_argument('--pose_mode', default="each_cam", choices=["each_cam", "overall"],
+                        help="Clustering based on overall dataset or each camera.")
+    parser.add_argument('--none_mode', default="new_label", choices=["ignore", "cam_labels", "new_label"],
+                        help="Different way of dealing the samples which did not detect pose.")    
+    parser.add_argument('--num_pose_cluster', default='8', choices=['4', '8'],
+                        help="The number of pose cluster for overall dataset of each camera.")
     # model
     parser.add_argument('-a', '--arch', type=str, default='resnet50',
                         choices=models.names())
