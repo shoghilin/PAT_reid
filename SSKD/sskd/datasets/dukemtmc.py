@@ -35,9 +35,10 @@ class DukeMTMC(BaseImageDataset):
 
         # read the pose info
         self.wo_filter = wo_filter
-        pose_dir = osp.join(kwargs['pose_dir'], 'pose_labels_duke.json')
-        with open(pose_dir, 'r') as f:
-            self.pose = json.load(f)
+        if not wo_filter:
+            pose_dir = osp.join(kwargs['pose_dir'], 'pose_labels_duke.json')
+            with open(pose_dir, 'r') as f:
+                self.pose = json.load(f)
 
         self._download_data()
         self._check_before_run()

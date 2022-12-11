@@ -168,7 +168,6 @@ def main_worker(args):
             print('\n * Finished epoch {:3d}  source mAP: {:5.1%}  best: {:5.1%}{}\n'.
                   format(epoch, mAP, best_mAP, ' *' if is_best else ''))
 
-    # if args.dataset_target == "lab_data": return
     print("Test on target domain:")
     evaluator.evaluate(test_loader_target, dataset_target.query, dataset_target.gallery, cmc_flag=True, rerank=args.rerank)
 

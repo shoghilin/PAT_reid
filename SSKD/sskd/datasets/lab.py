@@ -10,21 +10,23 @@ class LAB(BaseImageDataset):
     LAB collected dataset
     """
 
-    def __init__(self, root, verbose=True, **kwargs):
+    def __init__(self, root, verbose=True, wo_filter=False,  **kwargs):
         super(LAB, self).__init__()
         self.dataset_dir = root
         self.train_dir = osp.join(self.dataset_dir, 'train')
         self.query_dir = osp.join(self.dataset_dir, 'query')
         self.gallery_dir = osp.join(self.dataset_dir, 'gallery')
 
-        pose_dir = osp.join(self.dataset_dir, 'train/pose_labels_lab.json')
-        with open(pose_dir, 'r') as f:
-            self.pose = json.load(f)
+        
+        if not wo_filter:
+            pose_dir = osp.join(self.dataset_dir, 'train/pose_labels_lab.json')
+            with open(pose_dir, 'r') as f:
+                self.pose = json.load(f)
 
         self._check_before_run()
 
         self.num_pose_cluster = 0
-        train = self._process_dir()
+        train = self._process_dir(self.train_dir)
         query = self._process_dir_test(self.query_dir)
         gallery = self._process_dir_test(self.gallery_dir)
 
@@ -47,20 +49,24 @@ class LAB(BaseImageDataset):
         if not osp.exists(self.train_dir):
             raise RuntimeError("'{}' is not available".format(self.train_dir))
 
-    def _process_dir(self):
+    def _process_dir(self, dir_path):
         dataset = []
         for pth in os.listdir(self.train_dir):
             img_path = osp.join(self.train_dir, pth)
             camid = pth[7]
-            if osp.splitext(osp.basename(img_path))[0] not in self.pose.keys():
-                continue
-            else:
-                poseid = self.pose[osp.splitext(osp.basename(img_path))[0]]
-                dataset.append((img_path, 0, int(camid), poseid))
+            if dir_path == self.train_dir and not self.wo_filter:
+                if osp.splitext(osp.basename(img_path))[0] not in self.pose.keys():
+                    continue
+                else:
+                    poseid = self.pose[osp.splitext(osp.basename(img_path))[0]]
+                    dataset.append((img_path, 0, int(camid), poseid))
 
-                
-            if self.num_pose_cluster-1 < poseid:
-                self.num_pose_cluster = poseid+1
+                    
+                if self.num_pose_cluster-1 < poseid:
+                    self.num_pose_cluster = poseid+1
+            else:
+                dataset.append((img_path, 0, int(camid), -1))
+
         # print(dataset)
 
         return dataset

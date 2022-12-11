@@ -23,7 +23,7 @@ from sskd.utils.serialization import load_checkpoint, save_checkpoint, copy_stat
 def get_data(name, data_dir, height, width, batch_size, workers):
     root = osp.join(data_dir, name)
 
-    dataset = datasets.create(name, root)
+    dataset = datasets.create(name, root, wo_filter=True)
 
     normalizer = T.Normalize(mean=[0.485, 0.456, 0.406],
                              std=[0.229, 0.224, 0.225])

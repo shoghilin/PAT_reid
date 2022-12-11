@@ -61,9 +61,10 @@ class MSMT17(BaseImageDataset):
         
         # read the pose info
         self.wo_filter = wo_filter
-        pose_dir = osp.join(kwargs['pose_dir'], 'pose_labels_msmt17.json')
-        with open(pose_dir, 'r') as f:
-            self.pose = json.load(f)
+        if not wo_filter:
+            pose_dir = osp.join(kwargs['pose_dir'], 'pose_labels_msmt17.json')
+            with open(pose_dir, 'r') as f:
+                self.pose = json.load(f)
 
         self._check_before_run()
         
