@@ -13,3 +13,4 @@ python examples/test_model.py -dt ${TARGET} -a ${ARCH} \
     --resume ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-${MODE}/model_best.pth.tar \
     --logs-dir ${LOG_PATH}/${SOURCE}TO${TARGET}/${ARCH}-${MODE} \
     --data-dir ${DATA_PATH}  --visrank    # --rr-gpu 
+
