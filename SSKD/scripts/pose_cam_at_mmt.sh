@@ -106,9 +106,3 @@ SEED=2
 # training
 MODE="PAT"
 run
-
-MODE="CAT"
-run
-
-MODE="MMT"
-run
